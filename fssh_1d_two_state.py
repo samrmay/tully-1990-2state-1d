@@ -116,6 +116,9 @@ class FSSH_1d:
             return True
         return False
 
+    def handle_switch():
+        pass
+
     def run(self, max_step):
         # Variables should be initialized on class instantiation,
         # No need to init step (step 1)
@@ -136,10 +139,14 @@ class FSSH_1d:
             d_mtx = self.get_density_mtx(x0)
 
             # Step 3: Determine if switch should occur by calculating g
-            _, wave_functions = self.get_electronic_state(x0)
+            energy, wave_functions = self.get_electronic_state(x0)
             nacv = self.get_NACV(x0, wave_functions)
             will_switch = self.should_switch(
                 x0, d_mtx, nacv, self.potential_model.V(x0), wave_functions, self.del_t)
+
+            # Step 4: switch if needed, update velocity if needed
+            if will_switch:
+                self.handle_switch()
 
 
 class Simple_Avoided_Crossing:
