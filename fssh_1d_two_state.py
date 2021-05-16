@@ -51,7 +51,7 @@ class FSSH_1d:
             for j in range(self.num_states):
                 def f(x1):
                     return self.get_electronic_state(x1)[1][i, j]
-                grad_state[i, j] = misc.derivative(f, x)
+                grad_state[i, j] = misc.derivative(f, x, .01, order=5)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
         d1 = [e_state[0]@grad_state[0],
