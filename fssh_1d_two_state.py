@@ -44,20 +44,21 @@ class FSSH_1d:
 
     # Returns non-adiabatic coupling vectors given wave function vector
     def get_NACV(self, x, e_state):
-        grad_state = np.zeros(self.num_states)
+        grad_state = np.zeros((self.num_states, self.num_states))
 
         # Calculate grad of electronic wave functions w.r.t R
         for i in range(self.num_states):
-            def f(x):
-                return self.get_electronic_state(x)[1][i, i]
-            grad_state[i] = misc.derivative(f, x)
+            for j in range(self.num_states):
+                def f(x1):
+                    return self.get_electronic_state(x1)[1][i, j]
+                grad_state[i, j] = misc.derivative(f, x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
         d1 = [np.dot(e_state[0], grad_state[0]),
               np.dot(e_state[0], grad_state[1])]
         d2 = [np.dot(e_state[1], grad_state[0]),
               np.dot(e_state[1], grad_state[1])]
-        return np.asarray(d1, d2)
+        return np.asarray((d1, d2))
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
         # Function to return coefficients for a given t. R depends on t,
@@ -81,8 +82,6 @@ class FSSH_1d:
             c2_dot = (1/(ih_bar)) * \
                 ((c1*(V[1, 0] - ih_bar*np.dot(dx, nacvs[1, 0]))) +
                  (c2*(V[1, 1] - ih_bar*np.dot(dx, nacvs[1, 1]))))
-            print(V[0, 0], nacvs[0, 0])
-            print(c1_dot, c2_dot)
             return [c1_dot, c2_dot]
 
         # Integrate equation from t=0, max t is delta_t for algorithm.
@@ -117,6 +116,9 @@ class FSSH_1d:
         g12 = (del_t*b21)/density_mtx[0, 0]
         g21 = (del_t*b12)/density_mtx[1, 1]
         delta = rand.random()
+
+        g12 = 0 if math.isnan(g12) else g12
+        g21 = 0 if math.isnan(g21) else g21
 
         if (e_state == 0 and g12 > delta):
             return True
@@ -177,7 +179,7 @@ class FSSH_1d:
             energy, wave_functions = self.get_electronic_state(x0)
             nacv = self.get_NACV(x0, wave_functions)
             will_switch = self.should_switch(
-                x0, d_mtx, nacv, V, wave_functions, self.del_t)
+                x0, d_mtx, nacv, V, e_state0, self.del_t)
 
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
