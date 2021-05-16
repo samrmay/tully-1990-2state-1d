@@ -71,7 +71,7 @@ class Extended_Coupling_With_Reflection:
         if x > self.discont:
             V12 = V21 = self.B*(2-math.exp(-self.C*x))
         else:
-            V12 = V21 = self.B*(self.C*x)
+            V12 = V21 = self.B*math.exp(self.C*x)
 
         return np.asarray([[V11, V12], [V21, V22]])
 
@@ -88,8 +88,8 @@ class Extended_Coupling_With_Reflection:
 # Plots adiabatic potential from diabatic representation
 
 
-def plot_adiabatic_potential(model, x0, x1):
-    x_linspace = np.linspace(x0, x1, 100)
+def plot_adiabatic_potential(model, x0, x1, coupling_scaling_factor):
+    x_linspace = np.linspace(x0, x1, 500)
 
     # adiabatic potential vectors
     adiabatic_1 = np.zeros(len(x_linspace))
@@ -103,24 +103,23 @@ def plot_adiabatic_potential(model, x0, x1):
         # Calculate potentials
         diabatic = model.V(x)
         lamda, ev = np.linalg.eig(diabatic)
-        # Calculate eigenvector by eigenvalue to convert to adiabatic represetnation
+        # Multiply eigenvector by eigenvalue to convert to adiabatic represetnation
         adiabatic_1[i] = lamda[0]*ev[0, 0]
         adiabatic_2[i] = lamda[1]*ev[1, 1]
-
         # Calcualte d12
         grad_phi1 = np.zeros(2)
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 0]
-        grad_phi1[0] = misc.derivative(f, x)
+        grad_phi1[0] = misc.derivative(f, x, .01, order=5)
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 1]
-        grad_phi1[1] = misc.derivative(f, x)
+        grad_phi1[1] = misc.derivative(f, x, .01, order=5)
 
         d12[i] = ev[0]@grad_phi1
 
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
-    plt.plot(x_linspace, d12/50)
+    plt.plot(x_linspace, d12*coupling_scaling_factor)
     plt.show()
