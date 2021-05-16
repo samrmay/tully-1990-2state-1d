@@ -60,12 +60,12 @@ class FSSH_1d:
 
         return np.asarray([d1, d2])
 
-    def get_density_mtx(self, x0, t0=0):
+    def get_density_mtx(self, x0, v0, t0=0):
         # Function to return coefficients for a given t. R depends on t,
         # and rest of equation depends on R, so need to calculate R based on
         # current trajectory and t
         def f(t, c):
-            x, dx = self.calc_trajectory(x0, self.m, self.v, t)
+            x, dx = self.calc_trajectory(x0, self.m, v0, t)
             e_state = self.get_electronic_state(x)
             nacvs = self.get_NACV(x0, e_state)
             V = self.potential_model.V(x)
@@ -116,8 +116,31 @@ class FSSH_1d:
             return True
         return False
 
-    def handle_switch():
-        pass
+    def get_KE(self, m, v):
+        return .5*m*(v**2)
+
+    # Handles switch from old state to new state. Returns bool to denote
+    # if state switch was successful (if energy cannot be conserved, state switch fails)
+    def handle_switch(self, V, m, v, old_state, new_state):
+        KE = self.get_KE(m, v)
+        new_V = V[new_state, new_state]
+        old_V = V[old_state, old_state]
+        diff = new_V - old_V
+
+        # If no difference in potentials, no need to update velocity
+        if diff == 0:
+            self.e_state = new_state
+            return True
+        # Check if particle has enough KE to conserve energy. If not,
+        # cancel state switch
+        elif KE + diff < 0:
+            return False
+        else:
+            # Since only 1d problem, dont have to worry about in
+            # which direction to update velocity.
+            self.v = math.sqrt((v**2) - ((2/m)*diff))
+            self.e_state = new_state
+            return True
 
     def run(self, max_step):
         # Variables should be initialized on class instantiation,
@@ -130,23 +153,29 @@ class FSSH_1d:
             x0 = self.x
             t0 = self.t
             v0 = self.v
+            m = self.m
             e_state0 = self.e_state
             t1 = t0 + self.del_t
+            V = self.potential_model.V(x0)
 
-            self.x, self.v = self.calc_trajectory(x0, self.m, v0, t1, e_state0)
+            self.x, self.v = self.calc_trajectory(x0, m, v0, t1, e_state0)
 
-            # Step 2b: calculate density mtx. along current trajectory
-            d_mtx = self.get_density_mtx(x0)
+            # Step 2b: calculate density mtx. along current trajectory.
+            # Method integrates along trajectory according to current state
+            # until delta_t, so pass in x0, v0 as start conditions
+            d_mtx = self.get_density_mtx(x0, v0)
 
             # Step 3: Determine if switch should occur by calculating g
             energy, wave_functions = self.get_electronic_state(x0)
             nacv = self.get_NACV(x0, wave_functions)
             will_switch = self.should_switch(
-                x0, d_mtx, nacv, self.potential_model.V(x0), wave_functions, self.del_t)
+                x0, d_mtx, nacv, V, wave_functions, self.del_t)
 
-            # Step 4: switch if needed, update velocity if needed
+            # Step 4: switch if needed, update velocity if needed. Make sure
+            # to pass in new velocity (not v0)
             if will_switch:
-                self.handle_switch()
+                self.handle_switch(V, m, self.v, e_state0,
+                                   1 if e_state0 == 0 else 0)
 
 
 class Simple_Avoided_Crossing:
