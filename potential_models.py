@@ -37,16 +37,16 @@ class Simple_Avoided_Crossing:
 
 
 def plot_adiabatic_potential(model, x0, x1):
-    x_linspace = np.linspace(x0, x1)
+    x_linspace = np.linspace(x0, x1, 100)
     adiabatic_1 = np.zeros(len(x_linspace))
     adiabatic_2 = np.zeros(len(x_linspace))
     for i in range(len(x_linspace)):
         x = x_linspace[i]
 
         diabatic = model.V(x)
-        adiabatic = np.diag(diabatic)
-        adiabatic_1[i] = adiabatic[0]
-        adiabatic_2[i] = adiabatic[1]
+        lamda, ev = np.linalg.eig(diabatic)
+        adiabatic_1[i] = lamda[0]*ev[0, 0]
+        adiabatic_2[i] = lamda[1]*ev[1, 1]
 
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
