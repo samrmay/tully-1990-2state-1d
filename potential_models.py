@@ -44,7 +44,7 @@ class Double_Avoided_Crossing:
         self.D = D
 
     def V(self, x):
-        V11 = 0
+        V11 = 0.0
         V22 = -self.A*math.exp(-self.B*(x**2)) + self.E0
         V12 = V21 = self.C*math.exp(-self.D*(x**2))
 
@@ -88,8 +88,8 @@ class Extended_Coupling_With_Reflection:
 # Plots adiabatic potential from diabatic representation
 
 
-def plot_adiabatic_potential(model, x0, x1, coupling_scaling_factor):
-    x_linspace = np.linspace(x0, x1, 500)
+def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
+    x_linspace = np.linspace(x0, x1, num_iter)
 
     # adiabatic potential vectors
     adiabatic_1 = np.zeros(len(x_linspace))
@@ -104,18 +104,19 @@ def plot_adiabatic_potential(model, x0, x1, coupling_scaling_factor):
         diabatic = model.V(x)
         lamda, ev = np.linalg.eig(diabatic)
         # Multiply eigenvector by eigenvalue to convert to adiabatic represetnation
-        adiabatic_1[i] = lamda[0]*ev[0, 0]
-        adiabatic_2[i] = lamda[1]*ev[1, 1]
+        adiabatic = [-lamda[0]*ev[0, 0], -lamda[1]*ev[1, 1]]
+        adiabatic_1[i] = min(adiabatic)
+        adiabatic_2[i] = max(adiabatic)
         # Calcualte d12
         grad_phi1 = np.zeros(2)
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 0]
-        grad_phi1[0] = misc.derivative(f, x, .01, order=5)
+        grad_phi1[0] = misc.derivative(f, x, .01, order=3)
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 1]
-        grad_phi1[1] = misc.derivative(f, x, .01, order=5)
+        grad_phi1[1] = misc.derivative(f, x, .01, order=3)
 
         d12[i] = ev[0]@grad_phi1
 
