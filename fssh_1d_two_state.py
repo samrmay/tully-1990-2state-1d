@@ -49,7 +49,7 @@ class FSSH_1d:
         # Calculate grad of electronic wave functions w.r.t R
         for i in range(self.num_states):
             def f(x):
-                return self.get_electronic_state(x)[1][i]
+                return self.get_electronic_state(x)[1][i, i]
             grad_state[i] = misc.derivative(f, x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
@@ -60,14 +60,14 @@ class FSSH_1d:
 
         return np.asarray([d1, d2])
 
-    def get_density_mtx(self, x0, v0, t0=0):
+    def get_density_mtx(self, x0, v0, e_state, t0=0):
         # Function to return coefficients for a given t. R depends on t,
         # and rest of equation depends on R, so need to calculate R based on
         # current trajectory and t
         def f(t, c):
-            x, dx = self.calc_trajectory(x0, self.m, v0, t)
-            e_state = self.get_electronic_state(x)
-            nacvs = self.get_NACV(x0, e_state)
+            x, dx = self.calc_trajectory(x0, self.m, v0, t, e_state)
+            _, e_functions = self.get_electronic_state(x)
+            nacvs = self.get_NACV(x0, e_functions)
             V = self.potential_model.V(x)
 
             c1 = c[0]
@@ -163,7 +163,7 @@ class FSSH_1d:
             # Step 2b: calculate density mtx. along current trajectory.
             # Method integrates along trajectory according to current state
             # until delta_t, so pass in x0, v0 as start conditions
-            d_mtx = self.get_density_mtx(x0, v0)
+            d_mtx = self.get_density_mtx(x0, v0, e_state0)
 
             # Step 3: Determine if switch should occur by calculating g
             energy, wave_functions = self.get_electronic_state(x0)
