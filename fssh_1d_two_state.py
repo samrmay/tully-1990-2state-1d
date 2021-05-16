@@ -54,10 +54,10 @@ class FSSH_1d:
                 grad_state[i, j] = misc.derivative(f, x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
-        d1 = [np.dot(e_state[0], grad_state[0]),
-              np.dot(e_state[0], grad_state[1])]
-        d2 = [np.dot(e_state[1], grad_state[0]),
-              np.dot(e_state[1], grad_state[1])]
+        d1 = [e_state[0]@grad_state[0],
+              e_state[0]@grad_state[1]]
+        d2 = [e_state[1]@grad_state[0],
+              e_state[1]@grad_state[1]]
         return np.asarray((d1, d2))
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
