@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import scipy.misc as misc
 import matplotlib.pyplot as plt
 
 
@@ -38,18 +39,39 @@ class Simple_Avoided_Crossing:
 
 def plot_adiabatic_potential(model, x0, x1):
     x_linspace = np.linspace(x0, x1, 100)
+
+    # adiabatic potential vectors
     adiabatic_1 = np.zeros(len(x_linspace))
     adiabatic_2 = np.zeros(len(x_linspace))
+
+    # d12 vector
+    d12 = np.zeros(len(x_linspace))
     for i in range(len(x_linspace)):
         x = x_linspace[i]
 
+        # Calculate potentials
         diabatic = model.V(x)
         lamda, ev = np.linalg.eig(diabatic)
+        # Calculate eigenvector by eigenvalue to convert to adiabatic represetnation
         adiabatic_1[i] = lamda[0]*ev[0, 0]
         adiabatic_2[i] = lamda[1]*ev[1, 1]
 
+        # Calcualte d12
+        grad_phi1 = np.zeros(2)
+
+        def f(x1):
+            return np.linalg.eig(model.V(x1))[1][1, 0]
+        grad_phi1[0] = misc.derivative(f, x)
+
+        def f(x1):
+            return np.linalg.eig(model.V(x1))[1][1, 1]
+        grad_phi1[1] = misc.derivative(f, x)
+
+        d12[i] = ev[0]@grad_phi1
+
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
+    plt.plot(x_linspace, d12/50)
     plt.show()
 
 
