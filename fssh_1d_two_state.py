@@ -57,8 +57,7 @@ class FSSH_1d:
               np.dot(e_state[0], grad_state[1])]
         d2 = [np.dot(e_state[1], grad_state[0]),
               np.dot(e_state[1], grad_state[1])]
-
-        return np.asarray([d1, d2])
+        return np.asarray(d1, d2)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
         # Function to return coefficients for a given t. R depends on t,
@@ -82,7 +81,8 @@ class FSSH_1d:
             c2_dot = (1/(ih_bar)) * \
                 ((c1*(V[1, 0] - ih_bar*np.dot(dx, nacvs[1, 0]))) +
                  (c2*(V[1, 1] - ih_bar*np.dot(dx, nacvs[1, 1]))))
-
+            print(V[0, 0], nacvs[0, 0])
+            print(c1_dot, c2_dot)
             return [c1_dot, c2_dot]
 
         # Integrate equation from t=0, max t is delta_t for algorithm.
