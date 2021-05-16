@@ -34,6 +34,29 @@ class Simple_Avoided_Crossing:
 
         return np.asarray([[dV11, dV12], [dV21, dV22]])
 
+
+class Double_Avoided_Crossing:
+    def __init__(self, A=.1, B=.28, E0=.05, C=.015, D=.06):
+        self.A = A
+        self.B = B
+        self.E0 = E0
+        self.C = C
+        self.D = D
+
+    def V(self, x):
+        V11 = 0
+        V22 = -self.A*math.exp(-self.B*(x**2)) + self.E0
+        V12 = V21 = self.C*math.exp(-self.D*(x**2))
+
+        return np.asarray([[V11, V12], [V21, V22]])
+
+    def dV(self, x):
+        dV11 = 0
+        dV22 = 2*self.A*self.B*x*math.exp(-self.B*(x**2))
+        dV12 = dV21 = -2*self.C*self.D*x*math.exp(-self.D*(x**2))
+
+        return np.asarray([[dV11, dV12], [dV21, dV22]])
+
 # Plots adiabatic potential from diabatic representation
 
 
@@ -73,6 +96,3 @@ def plot_adiabatic_potential(model, x0, x1):
     plt.plot(x_linspace, adiabatic_2)
     plt.plot(x_linspace, d12/50)
     plt.show()
-
-
-plot_adiabatic_potential(Simple_Avoided_Crossing(), -10, 10)
