@@ -20,7 +20,7 @@ class FSSH_1d:
         self.t = t0
         self.m = m
         self.coeff = coeff0
-        self.e_state = 0
+        self.e_state = state0
 
         self.num_states = 2
         self.dim = 1
@@ -176,6 +176,8 @@ class FSSH_1d:
             if will_switch:
                 self.handle_switch(V, m, self.v, e_state0,
                                    1 if e_state0 == 0 else 0)
+
+            # Step 5: Check stopping parameters (for now, none)
 
 
 class Simple_Avoided_Crossing:
