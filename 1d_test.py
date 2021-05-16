@@ -1,8 +1,9 @@
 import fssh_1d_two_state as fssh_1d
+import potential_models as models
 
-model = fssh_1d.Simple_Avoided_Crossing()
+model = models.Simple_Avoided_Crossing()
 
-momentum = 35
+momentum = 5
 m = 2000
 v = momentum/m
 alg = fssh_1d.FSSH_1d(model, .5, -10, v, m)
