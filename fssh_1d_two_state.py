@@ -88,8 +88,16 @@ class FSSH_1d:
         # Integrate equation from t=0, max t is delta_t for algorithm.
         # f takes algorithm's current velocity as starting velocity, so
         # shouldnt matter that starting t=0
-        c1, c2 = integrate.RK45(f, t0, self.coeff, self.del_t)
+        integrator = integrate.RK45(f, t0, self.coeff, self.del_t)
 
+        while integrator.status == 'running':
+            if integrator.step() == 'failed':
+                raise BaseException("failed to solve density mtx.")
+
+        if integrator.status == 'finished':
+            c1, c2 = integrator.y
+        else:
+            raise BaseException("failed to solve density mtx.")
         return np.asarray([[c1*(c1.conjugate()), c1*(c2.conjugate())],
                            [c2*(c1.conjugate()), c2*(c2.conjugate())]])
 
