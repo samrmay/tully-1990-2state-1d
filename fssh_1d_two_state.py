@@ -11,7 +11,7 @@ class FSSH_1d:
     # Potential model has methods for returning the diabatic representation in
     # mtx form and the derivative of the
     # potential, both at position x.
-    def __init__(self, potential_model, del_t, x0, v0, t0=0, m=2000,
+    def __init__(self, potential_model, del_t, x0, v0, m=2000, t0=0,
                  coeff0=np.asarray([1, 0]), state0=0):
         self.potential_model = potential_model
         self.del_t = del_t
@@ -25,7 +25,7 @@ class FSSH_1d:
         self.num_states = 2
         self.dim = 1
 
-        self.HBAR = 1.055 * (10**-34)
+        self.HBAR = 1
 
     # Returns tuple (new x, new velocity). Uses 1-d kinematics and potential
     # gradient as acceleration
@@ -95,6 +95,7 @@ class FSSH_1d:
 
         if integrator.status == 'finished':
             c1, c2 = integrator.y
+            self.coeff = c1, c2
         else:
             raise BaseException("failed to solve density mtx.")
         return np.asarray([[c1*(c1.conjugate()), c1*(c2.conjugate())],
@@ -110,16 +111,13 @@ class FSSH_1d:
 
         b21 = (2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag) - \
             2*((density_mtx[1, 0].conjugate()*np.dot(x, nacv[1, 0])).real)
-        b12 = min(0, b12)
-        b21 = min(0, b21)
 
         g12 = (del_t*b21)/density_mtx[0, 0]
         g21 = (del_t*b12)/density_mtx[1, 1]
         delta = rand.random()
 
-        g12 = 0 if math.isnan(g12) else g12
-        g21 = 0 if math.isnan(g21) else g21
-
+        g12 = max(0, g12)
+        g21 = max(0, g21)
         if (e_state == 0 and g12 > delta):
             return True
         elif (e_state == 1 and g21 > delta):
@@ -157,7 +155,7 @@ class FSSH_1d:
         # No need to init step (step 1)
 
         # Run for max number of steps or until stopping parameter is hit
-        for _ in range(max_step):
+        for i in range(max_step):
             # Step 2a: Calculate x, v for small time step based on
             # current trajectory (based on current PES)
             x0 = self.x
@@ -188,6 +186,8 @@ class FSSH_1d:
                                    1 if e_state0 == 0 else 0)
 
             # Step 5: Check stopping parameters (for now, none)
+            if i % 50 == 0:
+                print(self.x, self.v, self.coeff, self.e_state)
 
 
 class Simple_Avoided_Crossing:
@@ -202,7 +202,7 @@ class Simple_Avoided_Crossing:
         if x > self.discont:
             V11 = self.A*(1-(math.exp(-self.B*x)))
         else:
-            V11 = -self.A*(1-(math.exp(-self.B*x)))
+            V11 = -self.A*(1-(math.exp(self.B*x)))
 
         V22 = -V11
         V12 = V21 = self.C*math.exp(-self.D*(x**2))
@@ -213,7 +213,7 @@ class Simple_Avoided_Crossing:
         if x > self.discont:
             dV11 = self.A*self.B*x*math.exp(-self.B*x)
         else:
-            dV11 = -self.A*self.B*x*math.exp(-self.B*x)
+            dV11 = -self.A*self.B*x*math.exp(self.B*x)
 
         dV22 = -dV11
         dV12 = dV21 = -2*self.C*self.D*x*math.exp(-self.D*(x**2))
