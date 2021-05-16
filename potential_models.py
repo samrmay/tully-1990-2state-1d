@@ -57,6 +57,34 @@ class Double_Avoided_Crossing:
 
         return np.asarray([[dV11, dV12], [dV21, dV22]])
 
+
+class Extended_Coupling_With_Reflection:
+    def __init__(self, A=6*(10**-4), B=.1, C=.9, discont=0):
+        self.A = A
+        self.B = B
+        self.C = C
+        self.discont = discont
+
+    def V(self, x):
+        V11 = self.A
+        V22 = -self.A
+        if x > self.discont:
+            V12 = V21 = self.B*(2-math.exp(-self.C*x))
+        else:
+            V12 = V21 = self.B*(self.C*x)
+
+        return np.asarray([[V11, V12], [V21, V22]])
+
+    def dV(self, x):
+        dV11 = 0
+        dV22 = 0
+        if x > self.discont:
+            dV12 = dV21 = self.B*self.C*math.exp(-self.C*x)
+        else:
+            dV12 = dV21 = self.C*self.B*math.exp(self.C*x)
+
+        return np.asarray([[dV11, dV12], [dV21, dV22]])
+
 # Plots adiabatic potential from diabatic representation
 
 
