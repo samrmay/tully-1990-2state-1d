@@ -150,7 +150,7 @@ class FSSH_1d:
             self.e_state = new_state
             return True
 
-    def run(self, max_step):
+    def run(self, max_step, stopping_function):
         # Variables should be initialized on class instantiation,
         # No need to init step (step 1)
 
@@ -185,9 +185,10 @@ class FSSH_1d:
                 self.handle_switch(V, m, self.v, e_state0,
                                    1 if e_state0 == 0 else 0)
 
-            # Step 5: Check stopping parameters (for now, none)
-            if i % 50 == 0:
-                print(self.x, self.v, self.coeff, self.e_state)
+            # Step 5: Check stopping parameters using function passed in as argument.
+            # Parameters of function described above
+            if stopping_function(self):
+                break
 
 
 class Simple_Avoided_Crossing:
