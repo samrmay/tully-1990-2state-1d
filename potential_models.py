@@ -45,7 +45,7 @@ class Double_Avoided_Crossing:
 
     def V(self, x):
         V11 = 0.0
-        V22 = -self.A*math.exp(-self.B*(x**2)) + self.E0
+        V22 = (-self.A*math.exp(-self.B*(x**2))) + self.E0
         V12 = V21 = self.C*math.exp(-self.D*(x**2))
 
         return np.asarray([[V11, V12], [V21, V22]])
@@ -103,10 +103,9 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
         # Calculate potentials
         diabatic = model.V(x)
         lamda, ev = np.linalg.eig(diabatic)
-        # Multiply eigenvector by eigenvalue to convert to adiabatic represetnation
-        adiabatic = [-lamda[0]*ev[0, 0], -lamda[1]*ev[1, 1]]
-        adiabatic_1[i] = min(adiabatic)
-        adiabatic_2[i] = max(adiabatic)
+        # Adiabatic potential is just eigenvalue
+        adiabatic_1[i] = min(lamda)
+        adiabatic_2[i] = max(lamda)
         # Calcualte d12
         grad_phi1 = np.zeros(2)
 
