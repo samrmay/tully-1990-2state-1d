@@ -117,7 +117,7 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
             return np.linalg.eig(model.V(x1))[1][1, 1]
         grad_phi1[1] = misc.derivative(f, x, .01, order=3)
 
-        d12[i] = ev[0]@grad_phi1
+        d12[i] = -ev[0]@grad_phi1
 
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
