@@ -88,9 +88,9 @@ class Batch:
             lines.append(
                 f"end electronic coefficients: {state[4][0]}, {state[4][1]}\n")
 
-            avg_pos += state.x
-            avg_v += state.v
-            avg_state += state.e_state
+            avg_pos += state[0]
+            avg_v += state[1]
+            avg_state += state[2]
 
         avg_pos /= self.num_particles
         avg_v /= self.num_particles
@@ -107,4 +107,4 @@ class Batch:
         with open(outfile, 'w') as f:
             f.write("position,velocity,electronic_state\n")
             for state in self.states:
-                f.write(f"{state.x},{state.v},{state.e_state}\n")
+                f.write(f"{state[0]},{state[1]},{state[2]}\n")
