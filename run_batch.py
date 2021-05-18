@@ -34,7 +34,7 @@ class Batch:
                 x = fssh.FSSH_1d(self.model, del_t, start_x, v, mass)
                 x.run(max_iter, self.stopping_function)
 
-                self.states.append((x.x, x.v, x.e_state))
+                self.states.append((x.x, x.v, x.e_state, x.t, x.coeff))
         except Exception as e:
             self.batch_state = "failed"
             self.batch_error = e
@@ -46,28 +46,28 @@ class Batch:
         with open(outfile, 'w') as f:
             lines = []
             lines.append(date.today().isoformat())
-            lines.append(f"Job state: {self.batch_state}")
-            lines.append(f"Potential model: {type(self.model).__name__}")
+            lines.append(f"Job state: {self.batch_state}\n")
+            lines.append(f"Potential model: {type(self.model).__name__}\n")
             lines.append(
-                f"Job time: {self.end_time - self.start_time} seconds")
+                f"Job time: {self.end_time - self.start_time} seconds\n")
 
             if self.batch_state == "failed":
-                lines.append("Job failed...")
+                lines.append("Job failed...\n")
                 lines.append(self.batch_error)
                 f.writelines(lines)
             elif self.batch_state == "initiated":
-                lines.append("Job has not been run...")
+                lines.append("Job has not been run...\n")
                 f.writelines(lines)
             else:
-                lines.append(("-"*10) + "Job parameters" + ("-"*10))
-                lines.append(f"Num particles: {self.num_particles}")
-                lines.append(f"Max iter: {self.max_iter}")
-                lines.append(f"Time step: {self.del_t}")
-                lines.append(f"Particle momentum: {self.k}")
-                lines.append(f"Start position: {self.start_x}")
-                lines.append(f"Particle mass: {self.m}")
+                lines.append(("-"*10) + "Job parameters" + ("-"*10) + "\n")
+                lines.append(f"Num particles: {self.num_particles}\n")
+                lines.append(f"Max iter: {self.max_iter}\n")
+                lines.append(f"Time step: {self.del_t}\n")
+                lines.append(f"Particle momentum: {self.k}\n")
+                lines.append(f"Start position: {self.start_x}\n")
+                lines.append(f"Particle mass: {self.m}\n")
 
-                lines.append(("-"*10) + "Job results" + ("-"*10))
+                lines.append(("-"*10) + "Job results" + ("-"*10) + '\n')
                 f.writelines(lines)
                 self.enumerate_states(f)
 
@@ -80,13 +80,13 @@ class Batch:
         lines.append(("-"*10) + "Particle results" + ("-"*10))
         for i in range(len(self.states)):
             state = self.states[i]
-            lines.append(str(i))
-            lines.append(f"position: {state.x}")
-            lines.append(f"velocity: {state.v}")
-            lines.append(f"electronic state: {state.e_state}")
-            lines.append(f"end_time: {state.t}")
+            lines.append(str(i) + "\n")
+            lines.append(f"position: {state[0]}\n")
+            lines.append(f"velocity: {state[1]}\n")
+            lines.append(f"electronic state: {state[2]}\n")
+            lines.append(f"end_time: {state[3]}\n")
             lines.append(
-                f"end electronic coefficients: {state.coeff[0]}, {state.coeff[1]}")
+                f"end electronic coefficients: {state[4][0]}, {state[4][1]}\n")
 
             avg_pos += state.x
             avg_v += state.v
