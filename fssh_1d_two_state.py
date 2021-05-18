@@ -12,7 +12,7 @@ class FSSH_1d:
     # mtx form and the derivative of the
     # potential, both at position x.
     def __init__(self, potential_model, del_t, x0, v0, m=2000, t0=0,
-                 coeff0=np.asarray([1, 0]), state0=0):
+                 coeff0=np.asarray([1, 0], dtype=complex), state0=0):
         self.potential_model = potential_model
         self.del_t = del_t
         self.x = x0
@@ -58,7 +58,7 @@ class FSSH_1d:
               e_state[0]@grad_state[1]]
         d2 = [e_state[1]@grad_state[0],
               e_state[1]@grad_state[1]]
-        return np.asarray((d1, d2))
+        return np.asarray((d1, d2), dtype=complex)*(-1)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
         # Function to return coefficients for a given t. R depends on t,
@@ -99,7 +99,7 @@ class FSSH_1d:
         else:
             raise BaseException("failed to solve density mtx.")
         return np.asarray([[c1*(c1.conjugate()), c1*(c2.conjugate())],
-                           [c2*(c1.conjugate()), c2*(c2.conjugate())]])
+                           [c2*(c1.conjugate()), c2*(c2.conjugate())]], dtype=complex)
 
     # Determines whether a switch should be made given current state
     # (coefficients, position, density mtx, and coupling vectors). Returns bool
@@ -112,8 +112,8 @@ class FSSH_1d:
         b21 = (2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag) - \
             2*((density_mtx[1, 0].conjugate()*np.dot(x, nacv[1, 0])).real)
 
-        g12 = (del_t*b21)/density_mtx[0, 0]
-        g21 = (del_t*b12)/density_mtx[1, 1]
+        g12 = (del_t*b21)/density_mtx[0, 0] if density_mtx[0, 0] != 0 else 0
+        g21 = (del_t*b12)/density_mtx[1, 1] if density_mtx[1, 1] != 0 else 0
         delta = rand.random()
 
         g12 = max(0, g12)
@@ -173,7 +173,7 @@ class FSSH_1d:
             # until delta_t, so pass in x0, v0 as start conditions
             d_mtx = self.get_density_mtx(x0, v0, e_state0)
 
-            # Step 3: Determine if switch should occur by calculating g
+            # Step 3: Determine if switch should occur by calculating g.
             energy, wave_functions = self.get_electronic_state(x0)
             nacv = self.get_NACV(x0, wave_functions)
             will_switch = self.should_switch(
