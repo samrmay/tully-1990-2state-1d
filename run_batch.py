@@ -41,7 +41,7 @@ class Batch:
         finally:
             self.end_time = time.time()
 
-    def report(self, outfile):
+    def generate_report(self, outfile):
         outfile += ".txt"
         with open(outfile, 'w') as f:
             lines = []
