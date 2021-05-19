@@ -4,7 +4,42 @@ import scipy.misc as misc
 import matplotlib.pyplot as plt
 
 
-class Simple_Avoided_Crossing:
+class Diabatic_Model:
+    def __init__(self):
+        self.num_states = 0
+
+    def get_adiabatic(self, x):
+        return np.linalg.eig(self.V(x))
+
+    def get_adiabatic_energy(self, x):
+        return np.linalg.eig(self.V(x))[0]
+
+    def get_wave_function(self, x):
+        return np.linalg.eig(self.V(x))[1]
+
+    def get_d_adiabatic_energy(self, x, step=1e6, order=3):
+        d_potential = np.zeros(self.num_states)
+
+        for i in range(self.num_states):
+            def f(x1):
+                return self.get_adiabatic_energy(x1)[i]
+            d_potential[i] = misc.derivative(f, x, step, order=order)
+
+        return np.sort(d_potential)
+
+    def get_d_wave_functions(self, x, step=1e6, order=3):
+        grad_phi = np.zeros(self.num_states, self.num_states)
+
+        for i in range(self.num_states):
+            for j in range(self.num_states):
+                def f(x1):
+                    return self.get_wave_function(self, x)[i, j]
+                grad_phi[i, j] = misc.derivative(f, x, step, order=order)
+
+        return grad_phi
+
+
+class Simple_Avoided_Crossing(Diabatic_Model):
     def __init__(self, A=0.01, B=1.6, C=0.005, D=1.0, discont=0):
         self.A = A
         self.B = B
@@ -59,7 +94,7 @@ class Double_Avoided_Crossing:
 
 
 class Extended_Coupling_With_Reflection:
-    def __init__(self, A=6*(10**-4), B=.1, C=.9, discont=0):
+    def __init__(self, A=6e-4, B=.1, C=.9, discont=0):
         self.A = A
         self.B = B
         self.C = C
@@ -111,13 +146,13 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 0]
-        grad_phi1[0] = misc.derivative(f, x, .01, order=3)
+        grad_phi1[0] = misc.derivative(f, x, 1e-6, order=3)
 
         def f(x1):
             return np.linalg.eig(model.V(x1))[1][1, 1]
-        grad_phi1[1] = misc.derivative(f, x, .01, order=3)
+        grad_phi1[1] = misc.derivative(f, x, 1e-6, order=3)
 
-        d12[i] = -ev[0]@grad_phi1
+        d12[i] = ev[0]@grad_phi1
 
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
