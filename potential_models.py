@@ -22,10 +22,10 @@ class Diabatic_Model:
 
         for i in range(self.num_states):
             def f(x1):
-                return self.get_adiabatic_energy(x1)[i]
+                return np.sort(self.get_adiabatic_energy(x1))[i]
             d_potential[i] = misc.derivative(f, x, step, order=order)
 
-        return np.sort(d_potential)
+        return d_potential
 
     def get_d_wave_functions(self, x, step=.01, order=3):
         grad_phi = np.zeros((self.num_states, self.num_states))
