@@ -17,3 +17,5 @@ def extended():
 
 
 simple()
+double()
+extended()
