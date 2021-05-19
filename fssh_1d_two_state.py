@@ -54,11 +54,11 @@ class FSSH_1d:
                 grad_state[i, j] = misc.derivative(f, x, .01, order=3)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
-        d1 = [e_state[0]@grad_state[0],
-              e_state[0]@grad_state[1]]
-        d2 = [e_state[1]@grad_state[0],
-              e_state[1]@grad_state[1]]
-        return np.asarray((d1, d2), dtype=complex)*(-1)
+        d1 = [e_state[0]@grad_state[0, :],
+              e_state[0]@grad_state[1, :]]
+        d2 = [e_state[1]@grad_state[0, :],
+              e_state[1]@grad_state[1, :]]
+        return np.asarray((d1, d2), dtype=complex)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
         # Function to return coefficients for a given t. R depends on t,
@@ -67,7 +67,7 @@ class FSSH_1d:
         def f(t, c):
             x, dx = self.calc_trajectory(x0, self.m, v0, t, e_state)
             _, e_functions = self.get_electronic_state(x)
-            nacvs = self.get_NACV(x0, e_functions)
+            nacvs = self.get_NACV(x, e_functions)
             V = self.potential_model.V(x)
 
             c1 = c[0]
@@ -106,7 +106,7 @@ class FSSH_1d:
     # Since this version is specifically two_state, dont need to worry about
     # which state is being switched to
     def should_switch(self, x, density_mtx, nacv, V, e_state, del_t):
-        b12 = (2/self.HBAR)*((density_mtx[0, 1].conjugate()*V[0, 1]).imag) - \
+        b12 = ((2/self.HBAR)*((density_mtx[0, 1].conjugate()*V[0, 1]).imag)) - \
             2*((density_mtx[0, 1].conjugate()*np.dot(x, nacv[0, 1])).real)
 
         b21 = (2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag) - \
