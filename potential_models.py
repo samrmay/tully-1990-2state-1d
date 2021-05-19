@@ -35,7 +35,6 @@ class Diabatic_Model:
                 def f(x1):
                     return self.get_wave_function(x1)[i, j]
                 grad_phi[i, j] = misc.derivative(f, x, step, order=order)
-        print(grad_phi)
         return grad_phi
 
 
