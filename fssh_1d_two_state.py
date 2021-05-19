@@ -118,6 +118,7 @@ class FSSH_1d:
 
         g12 = max(0, g12)
         g21 = max(0, g21)
+        print(g12, g21)
         if (e_state == 0 and g12 > delta):
             return True
         elif (e_state == 1 and g21 > delta):
@@ -164,7 +165,6 @@ class FSSH_1d:
             m = self.m
             e_state0 = self.e_state
             t1 = t0 + self.del_t
-            V = self.potential_model.V(x0)
 
             self.x, self.v = self.calc_trajectory(x0, m, v0, t1, e_state0)
 
@@ -174,10 +174,11 @@ class FSSH_1d:
             d_mtx = self.get_density_mtx(x0, v0, e_state0)
 
             # Step 3: Determine if switch should occur by calculating g.
-            energy, wave_functions = self.get_electronic_state(x0)
-            nacv = self.get_NACV(x0, wave_functions)
+            energy, wave_functions = self.get_electronic_state(self.x)
+            nacv = self.get_NACV(self.x, wave_functions)
+            V = self.potential_model.V(self.x)
             will_switch = self.should_switch(
-                x0, d_mtx, nacv, V, e_state0, self.del_t)
+                self.x, d_mtx, nacv, V, e_state0, self.del_t)
 
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
