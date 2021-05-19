@@ -2,7 +2,6 @@
 # n-dimensions and m-states
 import math
 import numpy as np
-import scipy.misc as misc
 import scipy.integrate as integrate
 import random as rand
 
@@ -42,24 +41,17 @@ class FSSH_1d:
     # Retrieved from egienvalues/eigenfunctions of
     # diabatic representation
     def get_electronic_state(self, x):
-        return np.linalg.eigh(self.potential_model.V(x))
+        return self.potential_model.get_adiabatic(x)
 
     # Returns non-adiabatic coupling vectors given wave function vector
     def get_NACV(self, x, e_state):
-        grad_state = np.zeros((self.num_states, self.num_states))
-
-        # Calculate grad of electronic wave functions w.r.t R
-        for i in range(self.num_states):
-            for j in range(self.num_states):
-                def f(x1):
-                    return self.get_electronic_state(x1)[1][i, j]
-                grad_state[i, j] = misc.derivative(f, x, .01, order=3)
+        grad_phi = self.potential_model.get_d_wave_functions(x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
-        d1 = [e_state[0]@grad_state[0, :],
-              e_state[0]@grad_state[1, :]]
-        d2 = [e_state[1]@grad_state[0, :],
-              e_state[1]@grad_state[1, :]]
+        d1 = [e_state[0]@grad_phi[0, :],
+              e_state[0]@grad_phi[1, :]]
+        d2 = [e_state[1]@grad_phi[0, :],
+              e_state[1]@grad_phi[1, :]]
         return np.asarray((d1, d2), dtype=complex)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
@@ -131,10 +123,11 @@ class FSSH_1d:
 
     # Handles switch from old state to new state. Returns bool to denote
     # if state switch was successful (if energy cannot be conserved, state switch fails)
-    def handle_switch(self, V, m, v, old_state, new_state):
+    # energy is from adiabatic representation
+    def handle_switch(self, energy, m, v, old_state, new_state):
         KE = self.get_KE(m, v)
-        new_V = V[new_state, new_state]
-        old_V = V[old_state, old_state]
+        new_V = energy[new_state]
+        old_V = energy[old_state]
         diff = new_V - old_V
         # If no difference in potentials, no need to update velocity
         if diff == 0:
@@ -142,19 +135,25 @@ class FSSH_1d:
             return True
         # Check if particle has enough KE to conserve energy. If not,
         # cancel state switch
-        elif KE - diff < 0:
+        elif KE < diff:
+            if self.debug:
+                print(KE, diff)
+                print("failed state switch: ", old_state,
+                      "-/>", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff)
             return False
         else:
             # Since only 1d problem, dont have to worry about in
             # which direction to update velocity.
             self.v = math.sqrt((v**2) - ((2/m)*diff))
             self.e_state = new_state
+            if self.debug:
+                print("state switch: ", old_state,
+                      "->", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff)
             return True
 
     def run(self, max_step, stopping_function, debug=False):
         # Variables should be initialized on class instantiation,
-        # No need to init step (step 1)
-
+        self.debug = debug
         # Run for max number of steps or until stopping parameter is hit
         for i in range(max_step):
             # Step 2a: Calculate x, v for small time step based on
@@ -185,11 +184,8 @@ class FSSH_1d:
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
             if will_switch:
-                state1 = 1 if e_state0 == 0 else 0
-                if debug:
-                    print("state switch: ", e_state0,
-                          "->", state1, "@", self.x)
-                self.handle_switch(V, m, self.v, e_state0, state1)
+                self.handle_switch(energy, m, self.v, e_state0,
+                                   1 if e_state0 == 0 else 0)
 
             # Step 5: Check stopping parameters using function passed in as argument.
             # Parameters of function described above
