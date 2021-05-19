@@ -27,14 +27,29 @@ class FSSH_1d:
 
         self.HBAR = 1
 
-    # Returns tuple (new x, new velocity). Uses 1-d kinematics and potential
+    # Returns tuple (new x, new velocity). Uses 1-d kinematics and adiabatic potential
     # gradient as acceleration
-    def calc_trajectory(self, x0, m, v0, t1, e_state):
-        a = -self.potential_model.dV(x0)[e_state, e_state]/m
-        v1 = v0 + a*t1
-        x1 = x0 + (v0*t1) + .5*a*(t1**2)
+    def calc_trajectory(self, x0, m, v0, del_t, e_state):
+        d_potential = np.sort(self.get_d_adiabatic_potential(x0))
+        a = -d_potential[e_state]/m
+
+        v1 = v0 + a*del_t
+        x1 = x0 + (v0*del_t) + .5*a*(del_t**2)
 
         return (x1, v1)
+
+    def get_adiabatic_potential(self, x):
+        return np.linalg.eig(self.potential_model.V(x))[0]
+
+    def get_d_adiabatic_potential(self, x):
+        d_potential = np.zeros(2)
+
+        for i in range(2):
+            def f(x1):
+                return self.get_adiabatic_potential(x1)[i]
+            d_potential[i] = misc.derivative(f, x, 1e6, order=3)
+
+        return d_potential
 
     # Returns tuple(energies, eigenvectors == electronic wave functions).
     # Retrieved from egienvalues/eigenfunctions of
@@ -134,14 +149,14 @@ class FSSH_1d:
         new_V = V[new_state, new_state]
         old_V = V[old_state, old_state]
         diff = new_V - old_V
-
+        print(old_state, new_state, KE-diff, diff)
         # If no difference in potentials, no need to update velocity
         if diff == 0:
             self.e_state = new_state
             return True
         # Check if particle has enough KE to conserve energy. If not,
         # cancel state switch
-        elif KE + diff < 0:
+        elif KE - diff < 0:
             return False
         else:
             # Since only 1d problem, dont have to worry about in
