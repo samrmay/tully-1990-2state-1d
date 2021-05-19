@@ -30,7 +30,7 @@ class Batch:
         try:
             self.batch_state = "finished"
             for i in range(num_particles):
-                print(i, "/", num_particles)
+                print(i+1, "/", num_particles)
                 v = momentum/mass
                 x = fssh.FSSH_1d(self.model, del_t, start_x, v, mass)
                 x.run(max_iter, self.stopping_function, self.debug)
