@@ -18,13 +18,14 @@ class Batch:
 
         self.states = []
 
-    def run(self, num_particles=10, start_x=-10, momentum=30, mass=2000, del_t=.5, max_iter=5000):
+    def run(self, num_particles=10, start_x=-10, momentum=30, max_iter=5000, debug=False, mass=2000, del_t=.5):
         self.k = momentum
         self.m = mass
         self.del_t = del_t
         self.max_iter = max_iter
         self.num_particles = num_particles
         self.start_x = start_x
+        self.debug = debug
 
         try:
             self.batch_state = "finished"
@@ -32,7 +33,7 @@ class Batch:
                 print(i, "/", num_particles)
                 v = momentum/mass
                 x = fssh.FSSH_1d(self.model, del_t, start_x, v, mass)
-                x.run(max_iter, self.stopping_function)
+                x.run(max_iter, self.stopping_function, self.debug)
 
                 self.states.append((x.x, x.v, x.e_state, x.t, x.coeff))
         except Exception as e:
