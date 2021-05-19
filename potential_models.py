@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 
 class Diabatic_Model:
-    def __init__(self):
-        self.num_states = 0
+    def __init__(self, num_states):
+        self.num_states = num_states
 
     def get_adiabatic(self, x):
         return np.linalg.eig(self.V(x))
@@ -17,7 +17,7 @@ class Diabatic_Model:
     def get_wave_function(self, x):
         return np.linalg.eig(self.V(x))[1]
 
-    def get_d_adiabatic_energy(self, x, step=1e6, order=3):
+    def get_d_adiabatic_energy(self, x, step=0.01, order=3):
         d_potential = np.zeros(self.num_states)
 
         for i in range(self.num_states):
@@ -27,15 +27,15 @@ class Diabatic_Model:
 
         return np.sort(d_potential)
 
-    def get_d_wave_functions(self, x, step=1e6, order=3):
-        grad_phi = np.zeros(self.num_states, self.num_states)
+    def get_d_wave_functions(self, x, step=.01, order=3):
+        grad_phi = np.zeros((self.num_states, self.num_states))
 
         for i in range(self.num_states):
             for j in range(self.num_states):
                 def f(x1):
-                    return self.get_wave_function(self, x)[i, j]
+                    return self.get_wave_function(x1)[i, j]
                 grad_phi[i, j] = misc.derivative(f, x, step, order=order)
-
+        print(grad_phi)
         return grad_phi
 
 
@@ -46,6 +46,9 @@ class Simple_Avoided_Crossing(Diabatic_Model):
         self.C = C
         self.D = D
         self.discont = discont
+        self.num_states = 2
+
+        super().__init__(self.num_states)
 
     def V(self, x):
         if x > self.discont:
@@ -70,13 +73,16 @@ class Simple_Avoided_Crossing(Diabatic_Model):
         return np.asarray([[dV11, dV12], [dV21, dV22]])
 
 
-class Double_Avoided_Crossing:
+class Double_Avoided_Crossing(Diabatic_Model):
     def __init__(self, A=.1, B=.28, E0=.05, C=.015, D=.06):
         self.A = A
         self.B = B
         self.E0 = E0
         self.C = C
         self.D = D
+        self.num_states = 2
+
+        super().__init__(self.num_states)
 
     def V(self, x):
         V11 = 0.0
@@ -93,12 +99,15 @@ class Double_Avoided_Crossing:
         return np.asarray([[dV11, dV12], [dV21, dV22]])
 
 
-class Extended_Coupling_With_Reflection:
+class Extended_Coupling_With_Reflection(Diabatic_Model):
     def __init__(self, A=6e-4, B=.1, C=.9, discont=0):
         self.A = A
         self.B = B
         self.C = C
         self.discont = discont
+        self.num_states = 2
+
+        super().__init__(self.num_states)
 
     def V(self, x):
         V11 = self.A
@@ -135,23 +144,13 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
     for i in range(len(x_linspace)):
         x = x_linspace[i]
 
-        # Calculate potentials
-        diabatic = model.V(x)
-        lamda, ev = np.linalg.eig(diabatic)
-        # Adiabatic potential is just eigenvalue
-        adiabatic_1[i] = min(lamda)
-        adiabatic_2[i] = max(lamda)
+        # Get adiabatic representation
+        potential, ev = model.get_adiabatic(x)
+        adiabatic_1[i] = min(potential)
+        adiabatic_2[i] = max(potential)
+
         # Calcualte d12
-        grad_phi1 = np.zeros(2)
-
-        def f(x1):
-            return np.linalg.eig(model.V(x1))[1][1, 0]
-        grad_phi1[0] = misc.derivative(f, x, 1e-6, order=3)
-
-        def f(x1):
-            return np.linalg.eig(model.V(x1))[1][1, 1]
-        grad_phi1[1] = misc.derivative(f, x, 1e-6, order=3)
-
+        grad_phi1 = model.get_d_wave_functions(x)[1]
         d12[i] = ev[0]@grad_phi1
 
     plt.plot(x_linspace, adiabatic_1)
