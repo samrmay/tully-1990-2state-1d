@@ -23,7 +23,7 @@ class Batch:
         self.m = mass
         self.del_t = del_t
         self.max_iter = max_iter
-        self.num_particles = 10
+        self.num_particles = num_particles
         self.start_x = start_x
 
         try:
