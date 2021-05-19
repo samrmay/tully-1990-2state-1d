@@ -9,13 +9,14 @@ class Diabatic_Model:
         self.num_states = num_states
 
     def get_adiabatic(self, x):
-        return np.linalg.eig(self.V(x))
+        lamda, ev = np.linalg.eig(self.V(x))
+        return np.sort(lamda), ev
 
     def get_adiabatic_energy(self, x):
-        return np.linalg.eig(self.V(x))[0]
+        return self.get_adiabatic(x)[0]
 
     def get_wave_function(self, x):
-        return np.linalg.eig(self.V(x))[1]
+        return self.get_adiabatic(x)[1]
 
     def get_d_adiabatic_energy(self, x, step=0.01, order=3):
         d_potential = np.zeros(self.num_states)
@@ -33,7 +34,7 @@ class Diabatic_Model:
         for i in range(self.num_states):
             for j in range(self.num_states):
                 def f(x1):
-                    return self.get_wave_function(x1)[i, j]
+                    return self.get_wave_function(x1)[i][j]
                 grad_phi[i, j] = misc.derivative(f, x, step, order=order)
         return grad_phi
 
@@ -145,11 +146,11 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
 
         # Get adiabatic representation
         potential, ev = model.get_adiabatic(x)
-        adiabatic_1[i] = min(potential)
-        adiabatic_2[i] = max(potential)
+        adiabatic_1[i] = potential[0]
+        adiabatic_2[i] = potential[1]
 
         # Calcualte d12
-        grad_phi1 = model.get_d_wave_functions(x)[1]
+        grad_phi1 = model.get_d_wave_functions(x)[1, :]
         d12[i] = ev[0]@grad_phi1
 
     plt.plot(x_linspace, adiabatic_1)
