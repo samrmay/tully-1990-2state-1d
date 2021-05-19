@@ -105,6 +105,6 @@ class Batch:
     def output_csv(self, outfile):
         outfile += ".csv"
         with open(outfile, 'w') as f:
-            f.write("position,velocity,electronic_state\n")
+            f.write("position,velocity,electronic_state,coefficient\n")
             for state in self.states:
-                f.write(f"{state[0]},{state[1]},{state[2]}\n")
+                f.write(f"{state[0]},{state[1]},{state[2]},{state[4]}\n")
