@@ -118,7 +118,6 @@ class FSSH_1d:
 
         g12 = max(0, g12)
         g21 = max(0, g21)
-        print(g12, g21)
         if (e_state == 0 and g12 > delta):
             return True
         elif (e_state == 1 and g21 > delta):
