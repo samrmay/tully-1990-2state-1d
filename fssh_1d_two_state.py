@@ -151,7 +151,7 @@ class FSSH_1d:
             self.e_state = new_state
             return True
 
-    def run(self, max_step, stopping_function):
+    def run(self, max_step, stopping_function, debug=False):
         # Variables should be initialized on class instantiation,
         # No need to init step (step 1)
 
@@ -167,6 +167,8 @@ class FSSH_1d:
             t1 = t0 + self.del_t
 
             self.x, self.v = self.calc_trajectory(x0, m, v0, t1, e_state0)
+            if (debug and i % 100 == 0):
+                print(self.x, self.v, self.get_KE(m, self.v))
 
             # Step 2b: calculate density mtx. along current trajectory.
             # Method integrates along trajectory according to current state
@@ -183,8 +185,11 @@ class FSSH_1d:
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
             if will_switch:
-                self.handle_switch(V, m, self.v, e_state0,
-                                   1 if e_state0 == 0 else 0)
+                state1 = 1 if e_state0 == 0 else 0
+                if debug:
+                    print("state switch: ", e_state0,
+                          "->", state1, "@", self.x)
+                self.handle_switch(V, m, self.v, e_state0, state1)
 
             # Step 5: Check stopping parameters using function passed in as argument.
             # Parameters of function described above
