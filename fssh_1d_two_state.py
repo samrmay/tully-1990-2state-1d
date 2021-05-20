@@ -124,7 +124,7 @@ class FSSH_1d:
     # Handles switch from old state to new state. Returns bool to denote
     # if state switch was successful (if energy cannot be conserved, state switch fails)
     # energy is from adiabatic representation
-    def handle_switch(self, energy, m, v, old_state, new_state):
+    def handle_switch(self, energy, m, v, nacv, old_state, new_state):
         KE = self.get_KE(m, v)
         new_V = energy[new_state]
         old_V = energy[old_state]
@@ -137,14 +137,14 @@ class FSSH_1d:
         # cancel state switch
         elif KE < diff:
             if self.debug:
-                print(KE, diff)
                 print("failed state switch: ", old_state,
                       "-/>", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff)
             return False
         else:
             # Since only 1d problem, dont have to worry about in
             # which direction to update velocity.
-            self.v = math.sqrt((v**2) - ((2/m)*diff))
+            direction = -1 if v < 0 else 1
+            self.v = math.sqrt((v**2) - ((2/m)*diff))*direction
             self.e_state = new_state
             if self.debug:
                 print("state switch: ", old_state,
@@ -184,7 +184,7 @@ class FSSH_1d:
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
             if will_switch:
-                self.handle_switch(energy, m, self.v, e_state0,
+                self.handle_switch(energy, m, self.v, nacv, e_state0,
                                    1 if e_state0 == 0 else 0)
 
             # Step 5: Check stopping parameters using function passed in as argument.
