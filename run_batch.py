@@ -45,32 +45,35 @@ class Batch:
     def generate_report(self, outfile):
         outfile += ".txt"
         with open(outfile, 'w') as f:
-            lines = []
-            lines.append(date.today().isoformat())
-            lines.append(f"Job state: {self.batch_state}\n")
-            lines.append(f"Potential model: {type(self.model).__name__}\n")
-            lines.append(
-                f"Job time: {self.end_time - self.start_time} seconds\n")
+            self.write_heading(f)
+            self.enumerate_states(f)
 
-            if self.batch_state == "failed":
-                lines.append("Job failed...\n")
-                lines.append(self.batch_error)
-                f.writelines(lines)
-            elif self.batch_state == "initiated":
-                lines.append("Job has not been run...\n")
-                f.writelines(lines)
-            else:
-                lines.append(("-"*10) + "Job parameters" + ("-"*10) + "\n")
-                lines.append(f"Num particles: {self.num_particles}\n")
-                lines.append(f"Max iter: {self.max_iter}\n")
-                lines.append(f"Time step: {self.del_t}\n")
-                lines.append(f"Particle momentum: {self.k}\n")
-                lines.append(f"Start position: {self.start_x}\n")
-                lines.append(f"Particle mass: {self.m}\n")
+    def write_heading(self, f):
+        lines = []
+        lines.append(date.today().isoformat())
+        lines.append(f"\nJob state: {self.batch_state}\n")
+        lines.append(f"Potential model: {type(self.model).__name__}\n")
+        lines.append(
+            f"Job time: {self.end_time - self.start_time} seconds\n")
 
-                lines.append(("-"*10) + "Job results" + ("-"*10) + '\n')
-                f.writelines(lines)
-                self.enumerate_states(f)
+        if self.batch_state == "failed":
+            lines.append("Job failed...\n")
+            lines.append(self.batch_error)
+            f.writelines(lines)
+        elif self.batch_state == "initiated":
+            lines.append("Job has not been run...\n")
+            f.writelines(lines)
+        else:
+            lines.append(("-"*10) + "Job parameters" + ("-"*10) + "\n")
+            lines.append(f"Num particles: {self.num_particles}\n")
+            lines.append(f"Max iter: {self.max_iter}\n")
+            lines.append(f"Time step: {self.del_t}\n")
+            lines.append(f"Particle momentum: {self.k}\n")
+            lines.append(f"Start position: {self.start_x}\n")
+            lines.append(f"Particle mass: {self.m}\n")
+
+            lines.append(("-"*10) + "Job results" + ("-"*10) + '\n')
+            f.writelines(lines)
 
     def enumerate_states(self, f):
         avg_pos = 0
