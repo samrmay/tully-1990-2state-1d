@@ -139,7 +139,8 @@ class FSSH_1d:
         elif KE < diff:
             if self.debug:
                 print("failed state switch: ", old_state,
-                      "-/>", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff)
+                      "-/>", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff,
+                      f" d{old_state}{new_state}: ", nacv[old_state][new_state])
             return False
         else:
             # Since only 1d problem, dont have to worry about in
@@ -149,7 +150,8 @@ class FSSH_1d:
             self.e_state = new_state
             if self.debug:
                 print("state switch: ", old_state,
-                      "->", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff)
+                      "->", new_state, "@", self.x, " KE: ", KE, " deltaV: ", diff,
+                      f" d{old_state}{new_state}: ", nacv[old_state][new_state])
             return True
 
     def run(self, max_step, stopping_function, debug=False):
