@@ -20,6 +20,7 @@ class FSSH_1d:
         self.m = m
         self.coeff = coeff0
         self.e_state = state0
+        self.i = 0
 
         self.num_states = 2
         self.dim = 1
@@ -164,6 +165,7 @@ class FSSH_1d:
             m = self.m
             e_state0 = self.e_state
             t1 = t0 + self.del_t
+            self.i += 1
 
             self.x, self.v = self.calc_trajectory(x0, m, v0, t1, e_state0)
             if (debug and i % 100 == 0):
