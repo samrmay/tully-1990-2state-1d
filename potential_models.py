@@ -12,7 +12,7 @@ class Diabatic_Model:
         v, ev = np.linalg.eig(self.V(x))
         d = {}
         for i in range(len(v)):
-            d[v[i]] = ev[i, :]
+            d[v[i]] = ev[:, i]
 
         v_sorted = np.sort(v)
         ev_sorted = np.asarray([d[x] for x in v_sorted])
