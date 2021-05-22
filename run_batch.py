@@ -35,7 +35,7 @@ class Batch:
                 x = fssh.FSSH_1d(self.model, del_t, start_x, v, mass)
                 x.run(max_iter, self.stopping_function, self.debug)
 
-                self.states.append((x.x, x.v, x.e_state, x.t, x.coeff))
+                self.states.append((x.x, x.v, x.e_state, x.t, x.coeff, x.i))
         except Exception as e:
             self.batch_state = "failed"
             self.batch_error = e
@@ -88,7 +88,7 @@ class Batch:
             lines.append(f"position: {state[0]}\n")
             lines.append(f"velocity: {state[1]}\n")
             lines.append(f"electronic state: {state[2]}\n")
-            lines.append(f"end_time: {state[3]}\n")
+            lines.append(f"end_time: {self.del_t*state[5]}\n")
             lines.append(
                 f"end electronic coefficients: {state[4][0]}, {state[4][1]}\n")
 
