@@ -48,10 +48,10 @@ class FSSH_1d:
         grad_phi = self.potential_model.get_d_wave_functions(x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
-        d1 = [e_state[0]@grad_phi[0, :],
-              e_state[0]@grad_phi[1, :]]
-        d2 = [e_state[1]@grad_phi[0, :],
-              e_state[1]@grad_phi[1, :]]
+        d1 = [e_state[:, 0]@grad_phi[:, 0],
+              e_state[:, 0]@grad_phi[:, 1]]
+        d2 = [e_state[:, 1]@grad_phi[:, 0],
+              e_state[:, 1]@grad_phi[:, 1]]
         return np.asarray((d1, d2), dtype=complex)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
