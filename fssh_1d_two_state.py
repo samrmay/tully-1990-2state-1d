@@ -101,10 +101,11 @@ class FSSH_1d:
     # Since this version is specifically two_state, dont need to worry about
     # which state is being switched to
     def should_switch(self, dx, density_mtx, nacv, V, e_state, del_t):
+        # Uses dR/dt instead of R. Not sure if this is right. Check eq. 14
         b12 = ((2/self.HBAR)*((density_mtx[0, 1].conjugate()*V[0, 1]).imag)) - \
             2*((density_mtx[0, 1].conjugate()*np.dot(dx, nacv[0, 1])).real)
 
-        b21 = (2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag) - \
+        b21 = ((2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag)) - \
             2*((density_mtx[1, 0].conjugate()*np.dot(dx, nacv[1, 0])).real)
 
         g12 = (del_t*b21)/density_mtx[0, 0] if density_mtx[0, 0] != 0 else 1
