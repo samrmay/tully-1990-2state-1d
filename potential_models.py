@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import scipy.misc as misc
 import matplotlib.pyplot as plt
 
 
@@ -10,7 +9,13 @@ class Diabatic_Model:
 
     def get_adiabatic(self, x):
         v, ev = np.linalg.eig(self.V(x))
-        return np.sort(v), ev
+        d = {}
+        for i in range(len(v)):
+            d[v[i]] = ev[i]
+
+        v_sorted = np.sort(v)
+        ev_sorted = np.asarray([d[x] for x in v_sorted])
+        return v_sorted, ev_sorted
 
     def get_adiabatic_energy(self, x):
         return self.get_adiabatic(x)[0]
@@ -19,24 +24,14 @@ class Diabatic_Model:
         return self.get_adiabatic(x)[1]
 
     def get_d_adiabatic_energy(self, x, step=0.01, order=3):
-        d_potential = np.zeros(self.num_states)
+        v1 = self.get_adiabatic_energy(x + step)
+        v0 = self.get_adiabatic_energy(x - step)
+        return (v1 - v0)/(2*step)
 
-        for i in range(self.num_states):
-            def f(x1):
-                return self.get_adiabatic_energy(x1)[i]
-            d_potential[i] = misc.derivative(f, x, step, order=order)
-
-        return d_potential
-
-    def get_d_wave_functions(self, x, step=.01, order=3):
-        grad_phi = np.zeros((self.num_states, self.num_states))
-
-        for i in range(self.num_states):
-            for j in range(self.num_states):
-                def f(x1):
-                    return self.get_wave_function(x1)[i][j]
-                grad_phi[i, j] = misc.derivative(f, x, step, order=order)
-        return grad_phi
+    def get_d_wave_functions(self, x, step=.01):
+        phi1 = self.get_wave_function(x + step)
+        phi0 = self.get_wave_function(x - step)
+        return (phi1 - phi0)/(2*step)
 
 
 class Simple_Avoided_Crossing(Diabatic_Model):
