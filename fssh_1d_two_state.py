@@ -49,10 +49,10 @@ class FSSH_1d:
         grad_phi = self.potential_model.get_d_wave_functions(x)
 
         # Nonadiabatic coupling vector -> dij = <phi_i | grad_R phi_j>
-        d1 = [0,
+        d1 = [e_state[:, 0]@grad_phi[:, 0],
               e_state[:, 0]@grad_phi[:, 1]]
         d2 = [e_state[:, 1]@grad_phi[:, 0],
-              0]
+              e_state[:, 1]@grad_phi[:, 1]]
         return np.asarray((d1, d2), dtype=complex)
 
     def get_density_mtx(self, x0, v0, e_state, t0=0):
@@ -100,13 +100,13 @@ class FSSH_1d:
     # (coefficients, position, density mtx, and coupling vectors). Returns bool
     # Since this version is specifically two_state, dont need to worry about
     # which state is being switched to
-    def should_switch(self, dx, density_mtx, nacv, V, e_state, del_t):
+    def should_switch(self, x, density_mtx, nacv, V, e_state, del_t):
         # Uses dR/dt instead of R. Not sure if this is right. Check eq. 14
         b12 = ((2/self.HBAR)*((density_mtx[0, 1].conjugate()*V[0, 1]).imag)) - \
-            2*((density_mtx[0, 1].conjugate()*np.dot(dx, nacv[0, 1])).real)
+            2*((density_mtx[0, 1].conjugate()*np.dot(x, nacv[0, 1])).real)
 
         b21 = ((2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag)) - \
-            2*((density_mtx[1, 0].conjugate()*np.dot(dx, nacv[1, 0])).real)
+            2*((density_mtx[1, 0].conjugate()*np.dot(x, nacv[1, 0])).real)
 
         g12 = (del_t*b21)/density_mtx[0, 0] if density_mtx[0, 0] != 0 else 1
         g21 = (del_t*b12)/density_mtx[1, 1] if density_mtx[1, 1] != 0 else 1
@@ -184,7 +184,7 @@ class FSSH_1d:
             nacv = self.get_NACV(self.x, wave_functions)
             V = self.potential_model.V(self.x)
             will_switch = self.should_switch(
-                self.v, d_mtx, nacv, V, e_state0, self.del_t)
+                self.x, d_mtx, nacv, V, e_state0, self.del_t)
 
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
