@@ -61,38 +61,29 @@ class FSSH_1d:
         # current trajectory and t
         def f(t, c):
             x, dx = self.calc_trajectory(x0, self.m, v0, t, e_state)
-            _, e_functions = self.get_electronic_state(x)
+            energy, e_functions = self.get_electronic_state(x)
             nacvs = self.get_NACV(x, e_functions)
             V = self.potential_model.V(x)
-
             c1 = c[0]
             c2 = c[1]
 
             ih_bar = 1j*self.HBAR
 
             c1_dot = (1/(ih_bar)) * \
-                ((c1*(V[0, 0] - ih_bar*np.dot(dx, nacvs[0, 0]))) +
-                 (c2*(V[0, 1] - ih_bar*np.dot(dx, nacvs[0, 1]))))
+                ((c1*(energy[0] - ih_bar*np.dot(dx, nacvs[0, 0]))) +
+                 (c2*(0 - ih_bar*np.dot(dx, nacvs[0, 1]))))
 
             c2_dot = (1/(ih_bar)) * \
-                ((c1*(V[1, 0] - ih_bar*np.dot(dx, nacvs[1, 0]))) +
-                 (c2*(V[1, 1] - ih_bar*np.dot(dx, nacvs[1, 1]))))
+                ((c1*(0 - ih_bar*np.dot(dx, nacvs[1, 0]))) +
+                 (c2*(energy[1] - ih_bar*np.dot(dx, nacvs[1, 1]))))
             return [c1_dot, c2_dot]
 
         # Integrate equation from t=0, max t is delta_t for algorithm.
         # f takes algorithm's current velocity as starting velocity, so
         # shouldnt matter that starting t=0
-        integrator = integrate.RK45(f, t0, self.coeff, self.del_t)
-
-        while integrator.status == 'running':
-            if integrator.step() == 'failed':
-                raise BaseException("failed to solve density mtx.")
-
-        if integrator.status == 'finished':
-            c1, c2 = integrator.y
-            self.coeff = c1, c2
-        else:
-            raise BaseException("failed to solve density mtx.")
+        result = integrate.solve_ivp(f, (t0, self.del_t), self.coeff)
+        c1, c2 = result.y[:, -1]
+        self.coeff = c1, c2
         return np.asarray([[c1*(c1.conjugate()), c1*(c2.conjugate())],
                            [c2*(c1.conjugate()), c2*(c2.conjugate())]], dtype=complex)
 
@@ -100,13 +91,13 @@ class FSSH_1d:
     # (coefficients, position, density mtx, and coupling vectors). Returns bool
     # Since this version is specifically two_state, dont need to worry about
     # which state is being switched to
-    def should_switch(self, x, density_mtx, nacv, V, e_state, del_t):
+    def should_switch(self, dx, density_mtx, nacv, V, e_state, del_t):
         # Uses dR/dt instead of R. Not sure if this is right. Check eq. 14
-        b12 = ((2/self.HBAR)*((density_mtx[0, 1].conjugate()*V[0, 1]).imag)) - \
-            2*((density_mtx[0, 1].conjugate()*np.dot(x, nacv[0, 1])).real)
+        b12 = ((2/self.HBAR)*((density_mtx[0, 1].conjugate()*0).imag)) - \
+            2*((density_mtx[0, 1].conjugate()*np.dot(dx, nacv[0, 1])).real)
 
-        b21 = ((2/self.HBAR)*((density_mtx[1, 0].conjugate()*V[1, 0]).imag)) - \
-            2*((density_mtx[1, 0].conjugate()*np.dot(x, nacv[1, 0])).real)
+        b21 = ((2/self.HBAR)*((density_mtx[1, 0].conjugate()*0).imag)) - \
+            2*((density_mtx[1, 0].conjugate()*np.dot(dx, nacv[1, 0])).real)
 
         g12 = (del_t*b21)/density_mtx[0, 0] if density_mtx[0, 0] != 0 else 1
         g21 = (del_t*b12)/density_mtx[1, 1] if density_mtx[1, 1] != 0 else 1
@@ -178,13 +169,14 @@ class FSSH_1d:
             # Method integrates along trajectory according to current state
             # until delta_t, so pass in x0, v0 as start conditions
             d_mtx = self.get_density_mtx(x0, v0, e_state0)
+            self.d_mtx = d_mtx
 
             # Step 3: Determine if switch should occur by calculating g.
             energy, wave_functions = self.get_electronic_state(self.x)
             nacv = self.get_NACV(self.x, wave_functions)
             V = self.potential_model.V(self.x)
             will_switch = self.should_switch(
-                self.x, d_mtx, nacv, V, e_state0, self.del_t)
+                self.v, d_mtx, nacv, V, e_state0, self.del_t)
 
             # Step 4: switch if needed, update velocity if needed. Make sure
             # to pass in new velocity (not v0)
