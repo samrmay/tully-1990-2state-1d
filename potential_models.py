@@ -11,10 +11,13 @@ class Diabatic_Model:
         v, ev = np.linalg.eig(self.V(x))
         d = {}
         for i in range(len(v)):
-            d[v[i]] = ev[i]
+            d[v[i]] = ev[:, i]
 
         v_sorted = np.sort(v)
-        ev_sorted = np.asarray([d[x] for x in v_sorted])
+        ev_sorted = np.zeros((self.num_states, self.num_states))
+        for i in range(len(v_sorted)):
+            ev_sorted[:, i] = d[v[i]]
+
         return v_sorted, ev_sorted
 
     def get_adiabatic_energy(self, x):
@@ -23,12 +26,12 @@ class Diabatic_Model:
     def get_wave_function(self, x):
         return self.get_adiabatic(x)[1]
 
-    def get_d_adiabatic_energy(self, x, step=0.01, order=3):
+    def get_d_adiabatic_energy(self, x, step=0.00001):
         v1 = self.get_adiabatic_energy(x + step)
         v0 = self.get_adiabatic_energy(x - step)
         return (v1 - v0)/(2*step)
 
-    def get_d_wave_functions(self, x, step=.01):
+    def get_d_wave_functions(self, x, step=0.00001):
         phi1 = self.get_wave_function(x + step)
         phi0 = self.get_wave_function(x - step)
         return (phi1 - phi0)/(2*step)
@@ -153,5 +156,5 @@ def plot_adiabatic_potential(model, x0, x1, num_iter, coupling_scaling_factor):
     plt.plot(x_linspace, adiabatic_1)
     plt.plot(x_linspace, adiabatic_2)
     plt.plot(x_linspace, d12*coupling_scaling_factor)
-    plt.plot(x_linspace, d21*coupling_scaling_factor)
+   # plt.plot(x_linspace, d21*coupling_scaling_factor)
     plt.show()
